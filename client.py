@@ -1,16 +1,18 @@
 import socket
-from time import sleep
 
 sock = socket.socket()
-sock.setblocking(1)
-sock.connect(('10.38.165.12', 9090))
+host = '127.0.0.1'
+port = 9090
 
-#msg = input()
-msg = "Hi!"
-sock.send(msg.encode())
+try:
+    sock.connect((host, port))
+except socket.error as e:
+    print(str(e))
 
-data = sock.recv(1024)
-
+res = sock.recv(1024)
+while True:
+    mes = input('Type your message here: ')
+    sock.send(str.encode(mes))
+    res = sock.recv(1024)
+    print(res.decode())
 sock.close()
-
-print(data.decode())

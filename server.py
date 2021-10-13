@@ -1,20 +1,35 @@
 import socket
+from _thread import *
 
 sock = socket.socket()
-sock.bind(('', 9090))
-sock.listen(0)
-conn, addr = sock.accept()
-print(addr)
+host = '127.0.0.1'
+port = 9090
+conn_amount = 0
+try:
+    sock.bind((host, port))
+except socket.error as e:
+    print(e)
 
-msg = ''
+print('[sever] socket is listening..')
+sock.listen(5)
+
+
+def connection_thread(conn, addr):
+    conn.send(str.encode('Server is working:'))
+    while True:
+        data = conn.recv(1024)
+        response = f"[server] receieved '{data.decode()}'"
+        print(f"[{addr}] {data}")
+        if not data:
+            break
+        conn.sendall(str.encode(response))
+    conn.close()
+
 
 while True:
-	data = conn.recv(1024)
-	if not data:
-		break
-	msg += data.decode()
-	conn.send(data)
-
-print(msg)
-
-conn.close()
+    conn, addr = sock.accept()
+    print('[server] new connection: ' + addr[0] + ':' + str(addr[1]))
+    start_new_thread(connection_thread, (conn, addr))
+    conn_amount += 1
+    print('[server] connected clients: ' + str(conn_amount))
+sock.close()
