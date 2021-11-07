@@ -3,6 +3,8 @@ import sys
 import threading
 import queue
 
+socket.setdefaulttimeout(0.01)
+
 
 class ScanningThread(threading.Thread):
     def __init__(self, t_num, ip):
@@ -10,7 +12,7 @@ class ScanningThread(threading.Thread):
         self.t_num = t_num
         self.ip = ip
 
-    def start(self):
+    def run(self):
         global scanned_data
         while True:
             try:
@@ -20,8 +22,9 @@ class ScanningThread(threading.Thread):
                     sock.connect((self.ip, scanning_port))
                     with threading.Lock():
                         scanned_data.append(scanning_port)
-                        # print(scanning_port)
                 except ConnectionRefusedError:
+                    continue
+                except socket.timeout:
                     continue
                 finally:
                     # it's necessary to close connection
@@ -35,24 +38,21 @@ class ScanningThread(threading.Thread):
 class PortScanner:
     def __init__(self, ip, thread_amount):
         self.ip = ip
-
-        # adding all ports to queue
-        for new_port in range(1, N+1):
-            q.put(new_port)
-
+        self.add_to_queue()
         # starting scanning
-        self.scan(thread_amount=thread_amount)
+        for i in range(thread_amount):
+            thr = ScanningThread(i, self.ip)
+            thr.start()
 
         progress_bar = ProgressBar(range(N + 1), 50)
         for i in progress_bar.process():
             while (N - q.unfinished_tasks) < i:
                 continue
+        print(self)
 
-    def scan(self, thread_amount):
-        # creating&starting requested amount of threads
-        for i in range(thread_amount+1):
-            thr = ScanningThread(i, self.ip)
-            thr.start()
+    def add_to_queue(self):
+        for new_port in range(1, N+1):
+            q.put(new_port)
 
     def __str__(self):
         return 'Свободные порты:\n'+'\n'.join([str(port) for port in scanned_data])
@@ -85,4 +85,3 @@ if __name__ == '__main__':
     ip = str(input('Введите ipv4 адрес для сканирования(127.0.0.1): '))
     ports_n = int(input('Введите количество сканирующих потоков: '))
     scnnr = PortScanner(ip, ports_n)
-    print(scnnr)
