@@ -101,7 +101,7 @@ def connecting():
     while True:
         if CON_FLAG:
             conn, addr = sock.accept()
-            logging(f"Подключение клиента {addr[0]}:{addr[1]}")
+            logging(f"Подключение клиента - {addr[0]}:{addr[1]}")
             users_list.append(conn)
             threading.Thread(target=listening, args=(conn, addr), daemon=True).start()
 
